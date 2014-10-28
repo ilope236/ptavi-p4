@@ -26,10 +26,10 @@ class SIPRegisterHandler(SocketServer.DatagramRequestHandler):
         for clave in registro:
             tiempo = time.gmtime(registro[clave][2])
             hora = time.strftime('%Y-%m-%d %H:%M:%S', tiempo)
-            fich.write(clave+"\t"+registro[clave][0]+"\t"+hora+"\r\n")
+            fich.write(clave + "\t" + registro[clave][0] + "\t" + hora + "\r\n")
         fich.close()
 
-    def borrar_caducados(self, registro):
+    def borrar_caducados(self):
         """
         Gestiona la caducidad de los usuarios registrados
         """
@@ -42,6 +42,7 @@ class SIPRegisterHandler(SocketServer.DatagramRequestHandler):
                 list_caducados.append(clave)
         for clave in list_caducados:
             del registro[clave]
+            print 'Borramos al cliente: ' + clave
 
     def handle(self):
         while 1:
@@ -50,25 +51,29 @@ class SIPRegisterHandler(SocketServer.DatagramRequestHandler):
             #Comprobamos si hay linea en blanco
             if not line:
                 break
-            print "El cliente "+str(self.client_address)+" nos manda "+line
+            print "El cliente " + str(self.client_address) + " nos manda " + line
             #troceoamos la linea que nos llega
             line = line.split()
             #Verificamos que la formacion del regristrer es la correcta
             if line[0] == "REGISTER" and line[2] == "SIP/2.0":
-                    self.wfile.write(" SIP/2.0 200 OK\r\n\r\n")
-            line[1] = line[1].split(":")
-            #Solo metemos en el diccionario si el expires no es 0
-            if line[4] != "0":
-                hora_s = time.time()
-                registro[line[1][1]] = [str(self.client_address[0]), line[4], hora_s]
+                self.wfile.write(" SIP/2.0 200 OK\r\n\r\n")
+                line[1] = line[1].split(":")
+                #Solo metemos en el diccionario si el expires no es 0
+                usuario = line[1][1]
+                if line[4] != "0":
+                    hora_s = time.time()
+                    registro[usuario] = [str(self.client_address[0]), line[4], hora_s]
+                    print 'Guardamos al cliente: ' + usuario
+                else:
+                #Si un usuario se da de baja y esta en el registro, le borramos
+                    if usuario in registro:
+                        del registro[usuario]
+                        self.wfile.write(" SIP2.0 200 OK\r\n\r\n")
+                #Borro usuarios caducados y escribimos en el fichero
+                self.borrar_caducados(registro)
+                self.register2file()
             else:
-            #Si un usuario se da de baja y esta en el registro, le borramos
-                if line[1][1] in registro:
-                    del registro[line[1][1]]
-                    self.wfile.write(" SIP2.0 200 OK\r\n\r\n")
-            #Borro usuarios caducados y escribimos en el fichero
-            self.borrar_caducados(registro)
-            self.register2file()
+                self.wfile.write(" SIP/2.0 400 Bad Request\r\n\r\n")
             print registro
 """
 Empieza programa principal
