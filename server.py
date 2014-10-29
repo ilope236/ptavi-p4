@@ -72,11 +72,15 @@ class SIPRegisterHandler(SocketServer.DatagramRequestHandler):
             print valor
 
             if expires == 0:
-                print "El tiempo de expiración es 0.",
-                del clients[cliente]
-                print "El cliente '" + cliente + "' ha sido borrado"
+                #Solo borramos el cliente si esta en clients
+                if cliente in clients:
+                    print "El tiempo de expiración es 0.",
+                    del clients[cliente]
+                    print "El cliente '" + cliente + "' ha sido borrado"
 
             self.wfile.write(Data)
+        else:
+            self.wfile.write("SIP/2.0 400 Bad Request" + '\r\n\r\n')
 
     def update(self):
         """ Actualiza la lista de clientes a la hora actual"""
@@ -85,6 +89,7 @@ class SIPRegisterHandler(SocketServer.DatagramRequestHandler):
             if clients[client]["time"] < time.time():
                 lista_tmp.append(client)
         for client in lista_tmp:
+            print 'El cliente ' + client + ' ha sido borrado'
             del clients[client]
 
     def handle(self):
@@ -101,7 +106,7 @@ class SIPRegisterHandler(SocketServer.DatagramRequestHandler):
             if not line:
                 break
 
-            print line
+            print 'El cliente nos envia: ' + line
 
             self.register(line)
             self.update()
