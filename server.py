@@ -45,9 +45,9 @@ class SIPRegisterHandler(SocketServer.DatagramRequestHandler):
                     print "Guardamos user: " + user + " y la IP: " + ip + '\n'
                     dic_clients[user] = [ip, expires]
                 self.register2file()
-                self.wfile.write("SIP/2.0 200 OK" + '\r\n\r\n')
+                self.wfile.write("SIP/2.0 200 OK\r\n\r\n")
             else:
-                self.wfile.write("SIP/2.0 400 Bad Request" + '\r\n\r\n')
+                self.wfile.write("SIP/2.0 400 Bad Request\r\n\r\n")
             print "DICCIONARIO CLIENTES:", dic_clients
             print
 
@@ -78,5 +78,5 @@ class SIPRegisterHandler(SocketServer.DatagramRequestHandler):
 if __name__ == "__main__":
     # Creamos servidor register y escuchamos
     serv = SocketServer.UDPServer(("", PORT), SIPRegisterHandler)
-    print "Lanzando servidor register de SIP..." + '\n'
+    print "Lanzando servidor register de SIP...\n"
     serv.serve_forever()
